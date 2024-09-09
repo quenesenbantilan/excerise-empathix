@@ -1,0 +1,4 @@
+name: au
+arn: ${self:provider.environment.mobileAuthArn}
+resultTtlInSeconds: 3600
+identitySource: method.request.header.Authorization

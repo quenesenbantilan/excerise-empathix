@@ -1,0 +1,111 @@
+service: empathix-excercise
+
+plugins:
+  - serverless-esbuild
+  - serverless-offline
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  architecture: arm64
+  versionFunctions: false
+  deploymentMethod: direct
+  logRetentionInDays: 30
+  apiGateway:
+    shouldStartNameWithService: true
+  tracing:
+    apiGateway: true
+    lambda: true
+  stage: test
+  region: eu-west-1
+  environment: ${file(env.yml):${self:custom.stage}}
+  iam:
+    role:
+      statements:
+        - Effect: 'Allow' # xray permissions (required)
+          Action:
+            - 'xray:PutTraceSegments'
+            - 'xray:PutTelemetryRecords'
+          Resource:
+            - '*'
+        - Effect: Allow
+          Action:
+            - dynamodb:GetItem
+            - dynamodb:UpdateItem
+            - dynamodb:PutItem
+            - dynamodb:Scan
+            - dynamodb:Query
+          Resource:
+            - 'arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.empathixTable}'
+custom:
+  stage: '${opt:stage, self:provider.stage}'
+  esbuild:
+    target: node18
+    bundle: true
+    minify: true
+    exclude:
+      - 'aws-sdk'
+      - '@aws-sdk'
+
+functions:
+  getEmpathix:
+    handler: src/getEmpathix/handler.getEmpathix
+    memorySize: 256
+    timeout: 10
+    events:
+      - http:
+          method: get
+          path: /empathix/{id}
+          cors:
+            origins:
+              - http://localhost:8081
+            headers:
+              - Content-Type
+
+  createEmpathix:
+    handler: src/createEmpathix/handler.createEmpathix
+    memorySize: 256
+    timeout: 10
+    events:
+      - http:
+          method: post
+          path: /empathix
+          cors:
+            origins:
+              - http://localhost:8081
+            headers:
+              - Content-Type
+
+  updateEmpathix:
+    handler: src/updateEmpathix/handler.updateEmpathix
+    memorySize: 256
+    timeout: 10
+    events:
+      - http:
+          method: patch
+          path: /empathix/{id}
+          cors:
+            origins:
+              - http://localhost:8081
+            headers:
+              - Content-Type
+
+  deleteEmpathix:
+    handler: src/deleteEmpathix/handler.deleteEmpathix
+    memorySize: 256
+    timeout: 10
+    events:
+      - http:
+          method: delete
+          path: /empathix/{id}
+          cors:
+            origins:
+              - http://localhost:8081
+            headers:
+              - Content-Type
+
+package:
+  individually: true
+
+resources:
+  Resources: ${file(./resources/resources.${self:custom.stage}.yml):Resources}

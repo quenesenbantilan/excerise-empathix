@@ -1,0 +1,72 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Lambdas",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "program": "./node_modules/.bin/serverless",
+      "args": [
+        "offline",
+        "start",
+        "--stage",
+        "test",
+      ],
+      "env": {
+        "AUTHORIZER": "{\"sourceid\": \"SE210478\"}"
+      },
+      "skipFiles": [
+        "node_modules/**/*.js",
+        "<node_internals>/**/*.js"
+      ],
+      "internalConsoleOptions": "openOnSessionStart"
+    },
+    {
+      "name": "Tests - All",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "program": "./node_modules/.bin/mocha",
+      "args": [
+        "-r",
+        "ts-node/register",
+        "--no-timeouts",
+        "--colors",
+        "test/**/*.ts"
+      ],
+      "env": {
+        "PN_LOG_LEVEL": "OFF",
+        "TS_NODE_TRANSPILE_ONLY": "true"
+      },
+      "skipFiles": [
+        "node_modules/**/*.js",
+        "<node_internals>/**/*.js"
+      ],
+      "internalConsoleOptions": "openOnSessionStart"
+    },
+    {
+      "name": "Tests - Current File",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "program": "./node_modules/.bin/mocha",
+      "args": [
+        "-r",
+        "ts-node/register",
+        "--no-timeouts",
+        "--colors",
+        "${file}"
+      ],
+      "env": {
+        "PN_LOG_LEVEL": "DEBUG",
+        "TS_NODE_TRANSPILE_ONLY": "true"
+      },
+      "skipFiles": [
+        "node_modules/**/*.js",
+        "<node_internals>/**/*.js"
+      ],
+      "internalConsoleOptions": "openOnSessionStart"
+    }
+  ]
+}

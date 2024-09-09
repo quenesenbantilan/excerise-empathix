@@ -1,0 +1,73 @@
+Resources:
+  empathixTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: ${self:provider.environment.empathixTable}
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+
+  # Setup API Gateway mapping template for API Gateway errors
+  GatewayResponse4XX:
+    Type: 'AWS::ApiGateway::GatewayResponse'
+    Properties:
+      ResponseType: DEFAULT_4XX
+      RestApiId:
+        Ref: 'ApiGatewayRestApi'
+      ResponseParameters:
+        gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+        gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        gatewayresponse.header.Via: "'Retail AWS'"
+      ResponseTemplates:
+        application/json: >
+          {
+            "compositeFault": {
+              "faults": [{
+                "faultCode": -1,
+                "explanationText": "Wrong input / Not authorized / Not allowed to do this.",
+                "paramValues": []
+              }]
+            },
+            "message": "$context.error.responseType - $context.error.message"
+          }
+  GatewayResponse5XX:
+    Type: 'AWS::ApiGateway::GatewayResponse'
+    Properties:
+      ResponseType: DEFAULT_5XX
+      RestApiId:
+        Ref: 'ApiGatewayRestApi'
+      ResponseParameters:
+        gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+        gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        gatewayresponse.header.Via: "'Retail AWS'"
+      ResponseTemplates:
+        application/json: >
+          {
+            "compositeFault": {
+              "faults": [{
+                "faultCode": -1,
+                "explanationText": "The server experienced a runtime exception while processing the request. Try again later or contact customer support.",
+                "paramValues": []
+              }]
+            },
+            "message": "$context.error.responseType - $context.error.message"
+          }
+
+empathixTableStream:
+  type: dynamodb
+  startingPosition: LATEST
+  arn:
+    Fn::GetAtt:
+      - empathixTable
+      - StreamArn
+  bisectBatchOnFunctionError: true
